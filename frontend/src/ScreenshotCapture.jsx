@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ClipLoader } from 'react-spinners';
 import './ScreenshotCapture.css';
 
 const DEVICE_VIEWPORTS = {
@@ -182,7 +183,7 @@ const ScreenshotCapture = () => {
             >
               {loading ? (
                 <>
-                  <span className="spinner"></span>
+                  <ClipLoader color="white" size={16} loading={loading} />
                   Capturing...
                 </>
               ) : (
@@ -219,23 +220,34 @@ const ScreenshotCapture = () => {
             </div>
           )}
 
-          {image && (
+          {loading && (
+            <div className="spinner-container">
+              <ClipLoader color="#667eea" size={60} loading={loading} />
+              <p>Capturing screenshot...</p>
+              <p className="loading-detail">
+                This may take a few seconds depending on the website and element complexity.
+              </p>
+            </div>
+          )}
+
+          {image && !loading && (
             <div className="result-container">
               <div className="image-preview">
                 <img
                   src={`data:image/png;base64,${image}`}
                   alt="Screenshot Preview"
-                  className="screenshot-image"
+                  className="screenshot-image fade-in"
                 />
               </div>
               
               <div className="result-actions">
                 <button onClick={handleDownload} className="btn btn-success">
-                  💾 Download Screenshot
+                  � Download Screenshot
                 </button>
                 <div className="result-info">
                   <span>Device: {DEVICE_VIEWPORTS[device].label}</span>
                   <span>Format: PNG</span>
+                  <span>Size: {Math.round((image.length * 3) / 4 / 1024)} KB</span>
                   {delay > 0 && <span>Delay: {delay}ms</span>}
                 </div>
               </div>
@@ -244,7 +256,17 @@ const ScreenshotCapture = () => {
 
           {!image && !error && !loading && (
             <div className="placeholder">
-              Configure your screenshot settings and click "Capture Screenshot" to begin.
+              <div className="placeholder-icon">📸</div>
+              <h3>Ready to Capture</h3>
+              <p>Configure your screenshot settings and click "Capture Screenshot" to begin.</p>
+              <div className="placeholder-tips">
+                <p><strong>💡 Tips:</strong></p>
+                <ul>
+                  <li>Use specific CSS selectors for better targeting</li>
+                  <li>Add delay if elements need time to load</li>
+                  <li>Choose the right device type for your use case</li>
+                </ul>
+              </div>
             </div>
           )}
         </div>
