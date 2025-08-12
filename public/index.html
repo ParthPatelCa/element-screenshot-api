@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM Element Screenshot API - Test Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            background-color: #f8fafc;
+        }
+
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .sidebar .form-label {
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        .sidebar .form-text {
+            color: #cbd5e1;
+        }
+
+        .result-image {
+            max-width: 100%;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .result-image:hover {
+            transform: scale(1.02);
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .code-block {
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .status-badge {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .feature-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: none;
+            border-radius: 0.75rem;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .example-btn {
+            transition: all 0.2s ease;
+        }
+
+        .example-btn:hover {
+            transform: translateX(5px);
+        }
+
+        .spinner-grow-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .screenshot-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            border-left: 3px solid var(--primary-color);
+            transition: background-color 0.2s ease;
+        }
+
+        .history-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .api-endpoint {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-4 col-lg-3 sidebar p-4">
+                <div class="text-center mb-4">
+                    <h1 class="h3 mb-2">📸 Screenshot API</h1>
+                    <p class="text-light opacity-75">Capture DOM elements with precision</p>
+                </div>
+                
+                <form id="screenshotForm">
+                    <div class="mb-3">
+                        <label for="apiKey" class="form-label">
+                            <i class="fas fa-key me-2"></i>API Key
+                        </label>
+                        <input type="text" class="form-control" id="apiKey" value="supersecurekey" required>
+                        <div class="form-text">Your API authentication key</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="url" class="form-label">
+                            <i class="fas fa-globe me-2"></i>Website URL
+                        </label>
+                        <input type="url" class="form-control" id="url" value="https://github.com" required>
+                        <div class="form-text">The webpage to capture from</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="selector" class="form-label">
+                            <i class="fas fa-crosshairs me-2"></i>CSS Selector
+                        </label>
+                        <input type="text" class="form-control" id="selector" value=".Header" required>
+                        <div class="form-text">Element to capture (e.g., #id, .class)</div>
+                    </div>
+
+                    <!-- Advanced Options Accordion -->
+                    <div class="accordion accordion-flush mb-3" id="advancedOptions">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced">
+                                    <i class="fas fa-cogs me-2"></i>Advanced Options
+                                </button>
+                            </h2>
+                            <div id="collapseAdvanced" class="accordion-collapse collapse" data-bs-parent="#advancedOptions">
+                                <div class="accordion-body bg-white">
+                                    <div class="mb-3">
+                                        <label for="format" class="form-label text-dark">Format</label>
+                                        <select class="form-select" id="format">
+                                            <option value="png">PNG</option>
+                                            <option value="jpeg">JPEG</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3" id="qualityGroup" style="display: none;">
+                                        <label for="quality" class="form-label text-dark">JPEG Quality</label>
+                                        <input type="range" class="form-range" id="quality" min="1" max="100" value="90">
+                                        <div class="form-text text-muted">Quality: <span id="qualityValue">90</span>%</div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col">
+                                            <label for="width" class="form-label text-dark">Width</label>
+                                            <input type="number" class="form-control" id="width" value="1920">
+                                        </div>
+                                        <div class="col">
+                                            <label for="height" class="form-label text-dark">Height</label>
+                                            <input type="number" class="form-control" id="height" value="1080">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="delay" class="form-label text-dark">Delay (ms)</label>
+                                        <input type="number" class="form-control" id="delay" value="0" min="0" max="10000">
+                                        <div class="form-text text-muted">Wait time before capture</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="timeout" class="form-label text-dark">Timeout (ms)</label>
+                                        <input type="number" class="form-control" id="timeout" value="30000">
+                                    </div>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="waitForSelector" checked>
+                                        <label class="form-check-label text-dark" for="waitForSelector">
+                                            Wait for selector
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-light w-100 fw-bold" id="captureBtn">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" id="spinner"></span>
+                        <i class="fas fa-camera me-2"></i>Capture Screenshot
+                    </button>
+                </form>
+
+                <hr class="my-4 opacity-50">
+
+                <!-- Quick Examples -->
+                <h6 class="mb-3"><i class="fas fa-rocket me-2"></i>Quick Examples</h6>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-light btn-sm example-btn" onclick="setExample('github')">
+                        <i class="fab fa-github me-2"></i>GitHub Header
+                    </button>
+                    <button class="btn btn-outline-light btn-sm example-btn" onclick="setExample('google')">
+                        <i class="fab fa-google me-2"></i>Google Search
+                    </button>
+                    <button class="btn btn-outline-light btn-sm example-btn" onclick="setExample('bootstrap')">
+                        <i class="fab fa-bootstrap me-2"></i>Bootstrap Docs
+                    </button>
+                    <button class="btn btn-outline-light btn-sm example-btn" onclick="setExample('youtube')">
+                        <i class="fab fa-youtube me-2"></i>YouTube Header
+                    </button>
+                </div>
+
+                <hr class="my-4 opacity-50">
+
+                <!-- API Status -->
+                <div class="text-center">
+                    <div class="api-endpoint mb-2">
+                        <small>API: localhost:3000</small>
+                    </div>
+                    <div id="apiStatusIndicator">
+                        <span class="badge bg-warning">
+                            <i class="fas fa-circle me-1"></i>Checking...
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-8 col-lg-9 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="gradient-text mb-0">Dashboard</h2>
+                    <div>
+                        <span class="badge bg-primary status-badge me-2" id="statusBadge">
+                            <i class="fas fa-circle me-1"></i>Ready
+                        </span>
+                        <button class="btn btn-outline-danger btn-sm" onclick="clearResults()">
+                            <i class="fas fa-trash me-1"></i>Clear All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card feature-card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-camera fa-2x mb-2"></i>
+                                <h5 class="card-title" id="totalScreenshots">0</h5>
+                                <p class="card-text small">Screenshots Taken</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card feature-card bg-success text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                <h5 class="card-title" id="successfulCaptures">0</h5>
+                                <p class="card-text small">Successful</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card feature-card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <h5 class="card-title" id="avgResponseTime">0ms</h5>
+                                <p class="card-text small">Avg Response</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card feature-card bg-info text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-hdd fa-2x mb-2"></i>
+                                <h5 class="card-title" id="totalSize">0 KB</h5>
+                                <p class="card-text small">Total Size</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Area -->
+                <div id="results" class="d-none">
+                    <div class="card feature-card shadow-lg">
+                        <div class="card-header bg-gradient d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <h5 class="mb-0">
+                                <i class="fas fa-image me-2"></i>Latest Screenshot
+                            </h5>
+                            <div>
+                                <button class="btn btn-light btn-sm me-2" onclick="downloadImage()">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                                <button class="btn btn-outline-light btn-sm me-2" onclick="copyImageUrl()">
+                                    <i class="fas fa-copy me-1"></i>Copy URL
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" onclick="shareImage()">
+                                    <i class="fas fa-share me-1"></i>Share
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="imageContainer" class="text-center mb-4">
+                                <!-- Screenshot will appear here -->
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong><i class="fas fa-file me-2 text-primary"></i>Filename:</strong> 
+                                        <span id="resultFilename" class="text-muted"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong><i class="fas fa-weight me-2 text-success"></i>Size:</strong> 
+                                        <span id="resultSize" class="text-muted"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong><i class="fas fa-clock me-2 text-warning"></i>Timestamp:</strong> 
+                                        <span id="resultTimestamp" class="text-muted"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong><i class="fas fa-link me-2 text-info"></i>URL:</strong> 
+                                        <span id="resultUrl" class="text-muted small"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong><i class="fas fa-crosshairs me-2 text-danger"></i>Selector:</strong> 
+                                        <code id="resultSelector" class="text-muted"></code>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong><i class="fas fa-image me-2 text-secondary"></i>Format:</strong> 
+                                        <span id="resultFormat" class="text-muted"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Display -->
+                <div id="errorAlert" class="alert alert-danger d-none">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Error:</strong> <span id="errorMessage"></span>
+                </div>
+
+                <!-- Screenshot History -->
+                <div class="card feature-card mt-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-history me-2"></i>Recent Screenshots
+                            <button class="btn btn-outline-secondary btn-sm float-end" onclick="clearHistory()">
+                                <i class="fas fa-broom me-1"></i>Clear History
+                            </button>
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="screenshotHistory" class="screenshot-history">
+                            <div class="text-center text-muted p-4">
+                                <i class="fas fa-camera fa-3x mb-3 opacity-50"></i>
+                                <p>No screenshots yet. Take your first screenshot above!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Documentation -->
+                <div class="card feature-card mt-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-code me-2"></i>API Usage Examples
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-terminal me-2"></i>cURL Example:</h6>
+                                <div class="code-block">
+                                    <button class="copy-btn" onclick="copyToClipboard('curlExample')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <pre><code id="curlExample">curl -X POST http://localhost:3000/screenshot \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer supersecurekey" \
+  -d '{
+    "url": "https://github.com",
+    "selector": ".Header",
+    "options": {
+      "format": "png",
+      "viewport": {"width": 1920, "height": 1080}
+    }
+  }'</code></pre>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fab fa-js me-2"></i>JavaScript Example:</h6>
+                                <div class="code-block">
+                                    <button class="copy-btn" onclick="copyToClipboard('jsExample')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <pre><code id="jsExample">const response = await fetch('http://localhost:3000/screenshot', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer supersecurekey'
+  },
+  body: JSON.stringify({
+    url: 'https://github.com',
+    selector: '.Header',
+    options: {
+      format: 'png',
+      viewport: {width: 1920, height: 1080}
+    }
+  })
+});
+
+const result = await response.json();
+console.log('Screenshot:', result.filename);</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="successToast" class="toast" role="alert">
+            <div class="toast-header bg-success text-white">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong class="me-auto">Success</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="successToastBody">
+                Screenshot captured successfully!
+            </div>
+        </div>
+        
+        <div id="errorToast" class="toast" role="alert">
+            <div class="toast-header bg-danger text-white">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="errorToastBody">
+                Something went wrong!
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
