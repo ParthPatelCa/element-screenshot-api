@@ -1,12 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import ScreenshotCapture from './ScreenshotCapture.jsx'
-// import ScreenshotCaptureTailwind from './ScreenshotCaptureTailwind.jsx'
-import './ScreenshotCapture.css'
+// import ScreenshotCapture from './ScreenshotCapture.jsx'
+import ScreenshotCaptureTailwind from './ScreenshotCaptureTailwind.jsx'
+import './index.css'
 
-// Toggle between regular CSS version and Tailwind version
-// const App = ScreenshotCaptureTailwind; // Use this for Tailwind version
-const App = ScreenshotCapture; // Use this for custom CSS version
+// Using the redesigned Tailwind version
+const App = ScreenshotCaptureTailwind;
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

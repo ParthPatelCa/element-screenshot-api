@@ -107,37 +107,42 @@ const ScreenshotCaptureTailwind = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-purple-700">
+    <div className="min-h-screen bg-slate-50 font-sans">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-              📸 DOM Element Screenshot Tool
-            </h1>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <div className={`w-2 h-2 rounded-full animate-pulse ${
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                📸 DOM Screenshot Tool
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Capture any element from any website with precision
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className={`w-2 h-2 rounded-full ${
                 apiStatus === 'healthy' ? 'bg-green-500' : 
                 apiStatus === 'unhealthy' ? 'bg-red-500' : 'bg-gray-400'
               }`}></div>
-              API Status: {apiStatus}
+              <span className="text-gray-600">
+                API {apiStatus === 'healthy' ? 'Connected' : apiStatus === 'unhealthy' ? 'Error' : 'Checking...'}
+              </span>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Form Section */}
-          <div className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-            <div className="relative">
-              <h2 className="text-xl font-bold text-gray-800 mb-6">
-                Capture Configuration
-              </h2>
-              <div className="absolute bottom-0 left-0 w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
-            </div>
-
+          
+          {/* Configuration Panel */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Configuration
+            </h2>
+            
             <div className="space-y-6">
               {/* URL Input */}
               <div>
@@ -150,11 +155,11 @@ const ScreenshotCaptureTailwind = () => {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                 />
               </div>
 
-              {/* Selector Input */}
+              {/* CSS Selector Input */}
               <div>
                 <label htmlFor="selector" className="block text-sm font-medium text-gray-700 mb-2">
                   CSS Selector
@@ -165,12 +170,12 @@ const ScreenshotCaptureTailwind = () => {
                   value={selector}
                   onChange={(e) => setSelector(e.target.value)}
                   placeholder="#elementId, .className, or any CSS selector"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                 />
               </div>
 
               {/* Device and Delay Row */}
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="device" className="block text-sm font-medium text-gray-700 mb-2">
                     Device Type
@@ -179,7 +184,7 @@ const ScreenshotCaptureTailwind = () => {
                     id="device"
                     value={device} 
                     onChange={(e) => setDevice(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 outline-none bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white"
                   >
                     {Object.entries(DEVICE_VIEWPORTS).map(([key, config]) => (
                       <option key={key} value={key}>{config.label}</option>
@@ -199,46 +204,57 @@ const ScreenshotCaptureTailwind = () => {
                     min="0"
                     max="10000"
                     step="100"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                   />
                 </div>
               </div>
 
-              {/* Buttons */}
+              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <button 
                   onClick={handleCapture} 
                   disabled={loading || !url.trim() || !selector.trim()}
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg flex items-center justify-center gap-2"
+                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
                       <ClipLoader color="white" size={16} loading={loading} />
-                      Capturing...
+                      <span>Capturing...</span>
                     </>
                   ) : (
-                    <>📸 Capture Screenshot</>
+                    <>
+                      <span>📸</span>
+                      <span>Capture Screenshot</span>
+                    </>
                   )}
                 </button>
                 <button 
                   onClick={clearForm} 
-                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md font-medium hover:bg-gray-200 transition-all duration-200"
                 >
                   Clear
                 </button>
               </div>
 
-              {/* Examples */}
+              {/* Error Display */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  <strong>Error:</strong> {error}
+                </div>
+              )}
+
+              {/* Quick Examples */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Quick Examples</h3>
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Examples</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {EXAMPLE_SITES.map((example, index) => (
                     <button
                       key={index}
                       onClick={() => loadExample(example)}
-                      className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:from-gray-100 hover:to-gray-200 transition-all duration-200 hover:-translate-y-0.5"
+                      className="p-2 text-xs bg-gray-50 border border-gray-200 rounded-md text-gray-700 hover:bg-gray-100 transition-all duration-200 text-left"
                     >
-                      {example.name}
+                      <div className="font-medium">{example.name}</div>
+                      <div className="text-gray-500 truncate">{example.selector}</div>
                     </button>
                   ))}
                 </div>
@@ -246,108 +262,108 @@ const ScreenshotCaptureTailwind = () => {
             </div>
           </div>
 
-          {/* Result Section */}
-          <div className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-            <div className="relative">
-              <h2 className="text-xl font-bold text-gray-800 mb-6">Result</h2>
-              <div className="absolute bottom-0 left-0 w-12 h-1 bg-gradient-to-r from-green-500 to-blue-500 rounded-full"></div>
-            </div>
+          {/* Result Panel */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Result
+            </h2>
             
-            {/* Error Message */}
-            {error && (
-              <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 font-medium">
-                <strong>Error:</strong> {error}
-              </div>
-            )}
-
-            {/* Loading State */}
-            {loading && (
-              <div className="flex flex-col items-center justify-center py-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
-                <ClipLoader color="#667eea" size={60} loading={loading} />
-                <p className="mt-4 text-lg font-semibold text-gray-700">Capturing screenshot...</p>
-                <p className="mt-2 text-sm text-gray-500 text-center max-w-sm">
-                  This may take a few seconds depending on the website and element complexity.
-                </p>
-              </div>
-            )}
-
-            {/* Image Result */}
-            {image && !loading && (
-              <div className="text-center space-y-6">
-                <div className="relative group">
-                  <img
-                    src={`data:image/png;base64,${image}`}
-                    alt="Screenshot Preview"
-                    className="max-w-full h-auto border-2 border-gray-200 rounded-xl shadow-lg group-hover:scale-105 transition-transform duration-300 animate-fade-in"
-                  />
+            <div className="min-h-[400px] flex flex-col">
+              {/* Loading State */}
+              {loading && (
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  <ClipLoader color="#2563EB" size={50} loading={loading} />
+                  <p className="mt-4 text-gray-600 font-medium">Capturing screenshot...</p>
+                  <p className="mt-2 text-sm text-gray-500 text-center">
+                    This may take a few seconds depending on the website complexity
+                  </p>
                 </div>
-                
-                <div className="space-y-4">
-                  <button 
-                    onClick={handleDownload} 
-                    className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-                  >
-                    📥 Download Screenshot
-                  </button>
+              )}
+
+              {/* Image Result */}
+              {image && !loading && (
+                <div className="flex-1 flex flex-col">
+                  <div className="flex-1 flex items-center justify-center mb-4">
+                    <img
+                      src={`data:image/png;base64,${image}`}
+                      alt="Screenshot Preview"
+                      className="max-w-full max-h-96 border border-gray-200 rounded-lg shadow-sm fade-in"
+                    />
+                  </div>
                   
-                  <div className="flex flex-wrap justify-center gap-2 text-xs">
-                    <span className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-1 rounded-md border border-gray-200 font-medium">
-                      Device: {DEVICE_VIEWPORTS[device].label}
-                    </span>
-                    <span className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-1 rounded-md border border-gray-200 font-medium">
-                      Format: PNG
-                    </span>
-                    <span className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-1 rounded-md border border-gray-200 font-medium">
-                      Size: {Math.round((image.length * 3) / 4 / 1024)} KB
-                    </span>
-                    {delay > 0 && (
-                      <span className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-1 rounded-md border border-gray-200 font-medium">
-                        Delay: {delay}ms
+                  <div className="space-y-4">
+                    <button 
+                      onClick={handleDownload} 
+                      className="w-full bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <span>📥</span>
+                      <span>Download Screenshot</span>
+                    </button>
+                    
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span className="bg-gray-100 px-2 py-1 rounded text-gray-700">
+                        Device: {DEVICE_VIEWPORTS[device].label}
                       </span>
-                    )}
+                      <span className="bg-gray-100 px-2 py-1 rounded text-gray-700">
+                        Format: PNG
+                      </span>
+                      <span className="bg-gray-100 px-2 py-1 rounded text-gray-700">
+                        Size: {Math.round((image.length * 3) / 4 / 1024)} KB
+                      </span>
+                      {delay > 0 && (
+                        <span className="bg-gray-100 px-2 py-1 rounded text-gray-700">
+                          Delay: {delay}ms
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Placeholder */}
-            {!image && !error && !loading && (
-              <div className="text-center py-12 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl">
-                <div className="text-6xl mb-4 animate-bounce-slow">📸</div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">Ready to Capture</h3>
-                <p className="text-gray-600 mb-6">
-                  Configure your screenshot settings and click "Capture Screenshot" to begin.
-                </p>
-                
-                <div className="bg-white/70 p-6 rounded-lg max-w-md mx-auto text-left">
-                  <p className="font-semibold text-blue-600 mb-3">💡 Tips:</p>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li>• Use specific CSS selectors for better targeting</li>
-                    <li>• Add delay if elements need time to load</li>
-                    <li>• Choose the right device type for your use case</li>
-                  </ul>
+              {/* Placeholder */}
+              {!image && !error && !loading && (
+                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="text-6xl mb-4">📸</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Ready to Capture</h3>
+                  <p className="text-gray-600 mb-6 max-w-sm">
+                    Enter a website URL and CSS selector above, then click "Capture Screenshot" to get started.
+                  </p>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg max-w-sm">
+                    <h4 className="font-medium text-indigo-900 mb-2">💡 Pro Tips:</h4>
+                    <ul className="text-sm text-indigo-800 space-y-1 text-left">
+                      <li>• Use specific selectors like #id or .class</li>
+                      <li>• Add delay for dynamic content</li>
+                      <li>• Try different device types</li>
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="text-center py-8 text-white/80 bg-black/10">
-        <p className="text-sm">
-          Built with React + Vite + Tailwind CSS | Backend: Node.js + Puppeteer
-          <br />
-          <a 
-            href="https://github.com/ParthPatelCa/element-screenshot-api" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-white/90 hover:text-white font-medium underline"
-          >
-            View on GitHub
-          </a>
-        </p>
-      </footer>
+      <div className="bg-white border-t border-gray-200 mt-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center text-sm text-gray-600">
+            <p>
+              Built with React + Vite + Tailwind CSS | Backend: Node.js + Puppeteer
+            </p>
+            <p className="mt-1">
+              <a 
+                href="https://github.com/ParthPatelCa/element-screenshot-api" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-indigo-600 hover:text-indigo-700 font-medium"
+              >
+                View on GitHub →
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
