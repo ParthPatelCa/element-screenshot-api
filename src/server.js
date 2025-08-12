@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs').promises;
 require('dotenv').config();
 
-const { takeScreenshot } = require('./screenshot');
+const { takeScreenshot, isValidSelector } = require('./screenshot');
 const { checkApiKey, optionalApiKey, createRateLimiter } = require('./auth');
 const { getConfig, printConfigSummary } = require('./config');
 
@@ -100,13 +100,30 @@ app.get('/stats', async (req, res) => {
 const authMiddleware = config.enableAuth ? checkApiKey : optionalApiKey;
 app.post('/screenshot', authMiddleware, async (req, res) => {
   try {
-    const { url, selector, options = {} } = req.body;
+    const { 
+      url, 
+      selector, 
+      options = {},
+      fullPage = false,
+      viewportWidth,
+      viewportHeight
+    } = req.body;
 
     // Validation
-    if (!url || !selector) {
+    if (!url) {
       return res.status(400).json({
         error: 'Missing required fields',
-        message: 'Both url and selector are required',
+        message: 'URL is required',
+        required: ['url'],
+        received: Object.keys(req.body)
+      });
+    }
+
+    // If not full page, selector is required
+    if (!fullPage && !selector) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'Selector is required when fullPage is false',
         required: ['url', 'selector'],
         received: Object.keys(req.body)
       });
@@ -122,29 +139,64 @@ app.post('/screenshot', authMiddleware, async (req, res) => {
       });
     }
 
+    // Validate selector(s) if provided
+    if (selector && !isValidSelector(selector)) {
+      return res.status(400).json({
+        error: 'Invalid selector format',
+        message: 'Please provide a valid CSS selector or array of selectors'
+      });
+    }
+
     // Merge with default options
     const mergedOptions = {
       format: config.defaultFormat,
       quality: config.defaultQuality,
       timeout: config.browserTimeout,
       viewport: { ...config.defaultViewport },
+      fullPage,
+      viewportWidth,
+      viewportHeight,
       ...options
     };
 
     // Take screenshot
-    console.log(`📸 Screenshot request: ${url} -> ${selector}`);
+    const screenshotType = fullPage ? 'full page' : Array.isArray(selector) ? `${selector.length} selectors` : 'single selector';
+    console.log(`📸 Screenshot request: ${url} -> ${screenshotType}`);
+    
     const result = await takeScreenshot(url, selector, mergedOptions);
 
-    res.json({
-      success: true,
-      filename: result.filename,
-      size: result.size,
-      format: mergedOptions.format,
-      viewport: mergedOptions.viewport,
-      timestamp: new Date().toISOString(),
-      // Don't expose full file path in API response for security
-      message: 'Screenshot captured successfully'
-    });
+    // Handle different result types
+    if (result.type === 'multipleSelectors') {
+      res.json({
+        success: true,
+        type: 'multipleSelectors',
+        totalSelectors: result.totalSelectors,
+        successCount: result.successCount,
+        failureCount: result.failureCount,
+        results: result.results.map(r => ({
+          selector: r.selector,
+          success: r.success,
+          filename: r.success ? r.filename : undefined,
+          size: r.success ? r.size : undefined,
+          error: !r.success ? r.error : undefined
+        })),
+        format: mergedOptions.format,
+        viewport: mergedOptions.viewport,
+        timestamp: new Date().toISOString(),
+        message: `Captured ${result.successCount}/${result.totalSelectors} screenshots successfully`
+      });
+    } else {
+      res.json({
+        success: true,
+        type: result.type || 'singleSelector',
+        filename: result.filename,
+        size: result.size,
+        format: mergedOptions.format,
+        viewport: mergedOptions.viewport,
+        timestamp: new Date().toISOString(),
+        message: 'Screenshot captured successfully'
+      });
+    }
 
   } catch (error) {
     console.error('Screenshot error:', error);
@@ -162,6 +214,9 @@ app.post('/screenshot', authMiddleware, async (req, res) => {
     } else if (error.message.includes('net::ERR_')) {
       statusCode = 400;
       errorType = 'Network Error';
+    } else if (error.message.includes('Viewport dimensions')) {
+      statusCode = 400;
+      errorType = 'Invalid Viewport';
     }
 
     res.status(statusCode).json({
@@ -182,13 +237,29 @@ const DEVICE_VIEWPORTS = {
 // Frontend API endpoint - returns base64 image
 app.post('/api/screenshot', async (req, res) => {
   try {
-    const { url, selector, device = 'desktop', delay = 0 } = req.body;
+    const { 
+      url, 
+      selector, 
+      device = 'desktop', 
+      delay = 0,
+      fullPage = false,
+      viewportWidth,
+      viewportHeight
+    } = req.body;
 
     // Validation
-    if (!url || !selector) {
+    if (!url) {
       return res.status(400).json({
         success: false,
-        message: 'Both url and selector are required'
+        message: 'URL is required'
+      });
+    }
+
+    // If not full page, selector is required
+    if (!fullPage && !selector) {
+      return res.status(400).json({
+        success: false,
+        message: 'Selector is required when fullPage is false'
       });
     }
 
@@ -202,8 +273,16 @@ app.post('/api/screenshot', async (req, res) => {
       });
     }
 
-    // Get viewport for device
-    const viewport = DEVICE_VIEWPORTS[device] || DEVICE_VIEWPORTS.desktop;
+    // Get viewport for device or use custom dimensions
+    let viewport;
+    if (viewportWidth && viewportHeight) {
+      viewport = { 
+        width: parseInt(viewportWidth), 
+        height: parseInt(viewportHeight) 
+      };
+    } else {
+      viewport = DEVICE_VIEWPORTS[device] || DEVICE_VIEWPORTS.desktop;
+    }
 
     // Prepare options
     const options = {
@@ -211,32 +290,89 @@ app.post('/api/screenshot', async (req, res) => {
       viewport,
       delay: Math.max(0, delay),
       timeout: 30000,
-      waitForSelector: true
+      waitForSelector: true,
+      fullPage,
+      viewportWidth: viewportWidth ? parseInt(viewportWidth) : null,
+      viewportHeight: viewportHeight ? parseInt(viewportHeight) : null
     };
 
     // Take screenshot and get base64
-    console.log(`📱 Frontend screenshot request: ${url} -> ${selector} (${device})`);
+    const screenshotType = fullPage ? 'full page' : Array.isArray(selector) ? `${selector.length} selectors` : 'single selector';
+    console.log(`📱 Frontend screenshot request: ${url} -> ${screenshotType} (${device})`);
+    
     const result = await takeScreenshot(url, selector, options);
 
-    // Read the file and convert to base64
-    const imageBuffer = await fs.readFile(result.path);
-    const base64Image = imageBuffer.toString('base64');
+    // Handle different result types
+    if (result.type === 'multipleSelectors') {
+      // For multiple selectors, return array of base64 images
+      const images = [];
+      
+      for (const item of result.results) {
+        if (item.success) {
+          try {
+            const imageBuffer = await fs.readFile(item.path);
+            const base64Image = imageBuffer.toString('base64');
+            
+            images.push({
+              selector: item.selector,
+              success: true,
+              image: base64Image,
+              size: item.size
+            });
+            
+            // Clean up the file
+            await fs.unlink(item.path);
+          } catch (error) {
+            console.warn('Failed to process image for selector:', item.selector, error.message);
+            images.push({
+              selector: item.selector,
+              success: false,
+              error: 'Failed to process image'
+            });
+          }
+        } else {
+          images.push({
+            selector: item.selector,
+            success: false,
+            error: item.error
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        type: 'multipleSelectors',
+        totalSelectors: result.totalSelectors,
+        successCount: result.successCount,
+        failureCount: result.failureCount,
+        images,
+        device,
+        viewport,
+        timestamp: new Date().toISOString()
+      });
+      
+    } else {
+      // Single screenshot result
+      const imageBuffer = await fs.readFile(result.path);
+      const base64Image = imageBuffer.toString('base64');
 
-    // Clean up the file after sending (optional)
-    try {
-      await fs.unlink(result.path);
-    } catch (error) {
-      console.warn('Failed to clean up temporary file:', error.message);
+      // Clean up the file after sending
+      try {
+        await fs.unlink(result.path);
+      } catch (error) {
+        console.warn('Failed to clean up temporary file:', error.message);
+      }
+
+      res.json({
+        success: true,
+        type: result.type || 'singleSelector',
+        image: base64Image,
+        device,
+        viewport,
+        size: result.size,
+        timestamp: new Date().toISOString()
+      });
     }
-
-    res.json({
-      success: true,
-      image: base64Image,
-      device,
-      viewport,
-      size: result.size,
-      timestamp: new Date().toISOString()
-    });
 
   } catch (error) {
     console.error('Frontend screenshot error:', error);
@@ -248,6 +384,8 @@ app.post('/api/screenshot', async (req, res) => {
       message = 'Request timed out - the page took too long to load';
     } else if (error.message.includes('net::ERR_')) {
       message = 'Network error - could not reach the specified URL';
+    } else if (error.message.includes('Viewport dimensions')) {
+      message = 'Invalid viewport dimensions provided';
     }
 
     res.status(500).json({
