@@ -172,6 +172,92 @@ app.post('/screenshot', authMiddleware, async (req, res) => {
   }
 });
 
+// Device viewport configurations
+const DEVICE_VIEWPORTS = {
+  mobile: { width: 375, height: 667 },
+  tablet: { width: 768, height: 1024 },
+  desktop: { width: 1920, height: 1080 },
+};
+
+// Frontend API endpoint - returns base64 image
+app.post('/api/screenshot', async (req, res) => {
+  try {
+    const { url, selector, device = 'desktop', delay = 0 } = req.body;
+
+    // Validation
+    if (!url || !selector) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both url and selector are required'
+      });
+    }
+
+    // Validate URL format
+    try {
+      new URL(url);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid URL starting with http:// or https://'
+      });
+    }
+
+    // Get viewport for device
+    const viewport = DEVICE_VIEWPORTS[device] || DEVICE_VIEWPORTS.desktop;
+
+    // Prepare options
+    const options = {
+      format: 'png',
+      viewport,
+      delay: Math.max(0, delay),
+      timeout: 30000,
+      waitForSelector: true
+    };
+
+    // Take screenshot and get base64
+    console.log(`📱 Frontend screenshot request: ${url} -> ${selector} (${device})`);
+    const result = await takeScreenshot(url, selector, options);
+
+    // Read the file and convert to base64
+    const imageBuffer = await fs.readFile(result.path);
+    const base64Image = imageBuffer.toString('base64');
+
+    // Clean up the file after sending (optional)
+    try {
+      await fs.unlink(result.path);
+    } catch (error) {
+      console.warn('Failed to clean up temporary file:', error.message);
+    }
+
+    res.json({
+      success: true,
+      image: base64Image,
+      device,
+      viewport,
+      size: result.size,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Frontend screenshot error:', error);
+    
+    let message = 'Failed to capture screenshot';
+    if (error.message.includes('Element not found')) {
+      message = 'Element not found with the provided selector';
+    } else if (error.message.includes('timeout')) {
+      message = 'Request timed out - the page took too long to load';
+    } else if (error.message.includes('net::ERR_')) {
+      message = 'Network error - could not reach the specified URL';
+    }
+
+    res.status(500).json({
+      success: false,
+      message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.stack);

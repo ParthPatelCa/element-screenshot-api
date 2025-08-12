@@ -58,6 +58,12 @@ async function takeScreenshot(url, selector, options = {}) {
       timeout: mergedOptions.timeout 
     });
 
+    // Wait for additional delay if specified
+    if (mergedOptions.delay && mergedOptions.delay > 0) {
+      console.log(`⏳ Waiting for ${mergedOptions.delay}ms delay`);
+      await page.waitForTimeout(mergedOptions.delay);
+    }
+
     // Wait for selector if requested
     if (mergedOptions.waitForSelector) {
       console.log(`🔍 Waiting for selector: ${selector}`);
